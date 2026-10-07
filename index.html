@@ -3,190 +3,488 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>空き状況確認</title>
+  <title>空き状況</title>
   <style>
-    body { font-family: sans-serif; padding: 16px; max-width: 480px; margin: 0 auto; color: #222; }
-    h1 { font-size: 16px; font-weight: 500; margin: 0 0 12px; }
-    .legend { display: flex; gap: 16px; font-size: 12px; color: #555; margin-bottom: 12px; }
+    body { font-family: sans-serif; padding: 16px; max-width: 560px; margin: 0 auto; color: #222; -webkit-tap-highlight-color: transparent; }
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+    h1 { font-size: 16px; font-weight: 500; margin: 0; }
+    .lang { display: flex; gap: 4px; }
+    .lang button { padding: 4px 8px; font-size: 12px; }
+    .lang button.active { background: #222; color: #fff; border-color: #222; }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: #555; margin-bottom: 8px; }
     .legend span.box { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
     .busy-box { background: #d33; }
     .free-box { border: 1px solid #999; }
-    #grid { display: grid; gap: 4px; }
-    .cell { height: 24px; border-radius: 4px; }
+    .sel-box { background: #1a73e8; }
+    .hint { font-size: 11px; color: #888; margin: 0 0 8px; line-height: 1.6; }
+
+    .nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 12px 0 8px; }
+    .nav .range { font-size: 13px; color: #444; text-align: center; }
+    button { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer; font-size: 13px; }
+    button:disabled { color: #bbb; cursor: default; }
+    button.primary { background: #222; color: #fff; border-color: #222; }
+    button.primary:disabled { background: #bbb; border-color: #bbb; color: #fff; }
+
+    #grid { display: grid; gap: 4px; user-select: none; -webkit-user-select: none; }
+    .cell { height: 28px; border-radius: 4px; }
     .busy { background: #d33; }
-    .free { border: 1px solid #999; background: #fff; cursor: pointer; }
-    .free:hover { background: #f0f0f0; }
-    .selected { outline: 2px solid #1a73e8; }
-    .label { font-size: 11px; color: #555; text-align: center; }
-    .hour-label { font-size: 10px; color: #888; display: flex; align-items: center; }
+    .past { background: #f0f0f0; }
+    .free { border: 1px solid #999; background: #fff; cursor: pointer; touch-action: pan-y; }
+    .free:hover { background: #eef4fd; }
+    .free.selected { background: #1a73e8; border-color: #1a73e8; }
     .sk { background: #eee; animation: pulse 1.2s ease-in-out infinite; }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
-    #panel { display: none; margin-top: 16px; background: #f5f5f5; border-radius: 6px; padding: 12px; }
-    #panel p.hint { font-size: 12px; color: #888; margin: 0 0 4px; }
-    #panel p.value { font-size: 16px; font-weight: 500; margin: 0 0 12px; }
-    button { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer; }
+    .label { font-size: 11px; color: #555; text-align: center; padding: 4px 0; border-radius: 4px; line-height: 1.3; }
+    .label span { display: block; }
+    .label.day { cursor: pointer; }
+    .label.day:hover { background: #f0f0f0; }
+    .label.sat { color: #2c6fbb; }
+    .label.sun { color: #c0392b; }
+    .hour-label { font-size: 10px; color: #888; display: flex; align-items: center; }
+
+    .result { margin-top: 16px; background: #f5f5f5; border-radius: 6px; padding: 12px; }
+    .result-head { display: flex; justify-content: space-between; font-size: 12px; color: #888; margin: 0 0 8px; }
+    textarea { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; padding: 8px; font-size: 14px; font-family: inherit; resize: vertical; background: #fff; }
+    .result-btns { display: flex; gap: 8px; margin-top: 8px; }
+    .result-btns .primary { flex: 1; }
+
     #status { font-size: 11px; color: #888; margin-top: 16px; }
     #status.warn { color: #c0392b; }
   </style>
 </head>
 <body>
-  <h1>空き状況</h1>
+  <div class="top">
+    <h1 id="title"></h1>
+    <div class="lang">
+      <button data-lang="ja">日本語</button>
+      <button data-lang="en">English</button>
+      <button data-lang="zh">中文</button>
+    </div>
+  </div>
+
   <div class="legend">
-    <div><span class="box busy-box"></span>予定あり</div>
-    <div><span class="box free-box"></span>空き（クリックで選択）</div>
+    <div><span class="box busy-box"></span><span id="lg-busy"></span></div>
+    <div><span class="box free-box"></span><span id="lg-free"></span></div>
+    <div><span class="box sel-box"></span><span id="lg-sel"></span></div>
+  </div>
+  <p class="hint" id="hint"></p>
+  <p class="hint" id="tz"></p>
+
+  <div class="nav">
+    <button id="prev"></button>
+    <span class="range" id="range"></span>
+    <button id="next"></button>
   </div>
 
   <div id="grid"></div>
 
-  <div id="panel">
-    <p class="hint">選択した日時</p>
-    <p class="value" id="selected-text"></p>
-    <div style="display:flex; gap:8px;">
-      <button id="copy-btn">コピー</button>
-      <button id="mail-btn">メール作成</button>
+  <div class="result">
+    <p class="result-head"><span id="result-head"></span><span id="count"></span></p>
+    <textarea id="out" readonly rows="6"></textarea>
+    <div class="result-btns">
+      <button class="primary" id="copy" disabled></button>
+      <button id="clear" disabled></button>
     </div>
-    <p id="copy-msg" style="font-size:12px; color:#0a7a3c; margin-top:8px; display:none;">コピーしました</p>
   </div>
 
   <p id="status"></p>
 
   <script>
-    // ★ Apps ScriptのURL（末尾が /exec）をここに貼る
+    // Apps ScriptのURL（末尾が /exec）
     const API_URL = 'https://script.google.com/macros/s/AKfycbyezBAa75WP_XCmSrqF5se3f_QDmfAeTgwGgLwIlL91CsZCofHloLc92xImvFt17Wpt/exec';
 
-    const STORE_KEY = 'availability-v1';
+    const STORE_KEY = 'availability-v2';
+    const LANG_KEY = 'availability-lang';
     const REFRESH_MS = 60000;   // 1分ごとに自動更新
     const STALE_MIN = 10;       // これ以上古いデータは警告を出す
-    const WD = ['日', '月', '火', '水', '木', '金', '土'];
+    const PER_PAGE = 7;         // 1画面に表示する日数
+
+    // ---- 表示文言（日本語・英語・中国語） ----
+    const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const I18N = {
+      ja: {
+        title: '空き状況', busy: '予定あり', free: '空き', sel: '選択中',
+        hint: '空き枠をクリックで選択・解除。同じ日の枠を縦にドラッグ（またはShiftを押しながらクリック）すると、まとめて選択できます。日付をクリックすると、その日の空きをすべて選択します。',
+        tz: '表示している時間は日本時間（JST）です。',
+        prev: '← 前の週', next: '次の週 →',
+        dayTip: 'クリックでこの日の空きをすべて選択／解除',
+        resultHead: '選択した日時',
+        count: function (n) { return n + '枠 選択中'; },
+        placeholder: '空き枠をクリックして選択してください',
+        copy: 'クリップボードにコピー', copied: 'コピーしました', clear: 'クリア',
+        updated: function (hh) { return '最終更新 ' + hh + '（1分ごとに自動更新）'; },
+        stale: function (hh) { return '最終更新 ' + hh + '（データが古い可能性があります）'; },
+        noApi: 'index.html の API_URL に Apps Script のURLを設定してください',
+        waiting: 'サーバー側の更新を待っています。1〜2分後に再読み込みしてください',
+        failKeep: '更新に失敗しました（前回の内容を表示中）',
+        failFirst: '読み込みに失敗しました。時間をおいて再読み込みしてください',
+        wd: ['日', '月', '火', '水', '木', '金', '土'],
+        head1: function (d) { return (d.getMonth() + 1) + '/' + d.getDate(); },
+        headWd: function (d) { return '(' + this.wd[d.getDay()] + ')'; },
+        dateLabel: function (d) { return (d.getMonth() + 1) + '/' + d.getDate() + '(' + this.wd[d.getDay()] + ')'; },
+        to: '〜', join: '、', bullet: '・', rangeSep: ' 〜 '
+      },
+      en: {
+        title: 'Availability', busy: 'Busy', free: 'Available', sel: 'Selected',
+        hint: 'Click an available slot to select or deselect it. Drag vertically within a day (or Shift+click) to select several slots at once. Click a date to select or deselect all available slots for that day.',
+        tz: 'All times are in Japan Standard Time (JST).',
+        prev: '← Previous week', next: 'Next week →',
+        dayTip: 'Click to select or deselect all available slots on this day',
+        resultHead: 'Selected times',
+        count: function (n) { return n + (n === 1 ? ' slot' : ' slots') + ' selected'; },
+        placeholder: 'Click available slots above to select them',
+        copy: 'Copy to clipboard', copied: 'Copied', clear: 'Clear',
+        updated: function (hh) { return 'Last updated ' + hh + ' (auto-refreshes every minute)'; },
+        stale: function (hh) { return 'Last updated ' + hh + ' (data may be outdated)'; },
+        noApi: 'Set the Apps Script URL as API_URL in index.html',
+        waiting: 'Waiting for the server update. Please reload in a minute or two.',
+        failKeep: 'Update failed (showing the previous data)',
+        failFirst: 'Failed to load. Please try again later.',
+        wd: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+        head1: function (d) { return MONTHS_EN[d.getMonth()] + ' ' + d.getDate(); },
+        headWd: function (d) { return this.wd[d.getDay()]; },
+        dateLabel: function (d) { return MONTHS_EN[d.getMonth()] + ' ' + d.getDate() + ' (' + this.wd[d.getDay()] + ')'; },
+        to: '–', join: ', ', bullet: '- ', rangeSep: ' – '
+      },
+      zh: {
+        title: '空闲时间', busy: '已有安排', free: '空闲', sel: '已选',
+        hint: '点击空闲时段即可选择或取消。在同一天内纵向拖动（或按住 Shift 点击）可一次选择多个时段。点击日期可选择或取消当天所有空闲时段。',
+        tz: '所示时间均为日本标准时间（JST）。',
+        prev: '← 上一周', next: '下一周 →',
+        dayTip: '点击可选择或取消当天所有空闲时段',
+        resultHead: '已选时间',
+        count: function (n) { return '已选 ' + n + ' 个时段'; },
+        placeholder: '请点击上方的空闲时段进行选择',
+        copy: '复制到剪贴板', copied: '已复制', clear: '清除',
+        updated: function (hh) { return '最后更新 ' + hh + '（每分钟自动刷新）'; },
+        stale: function (hh) { return '最后更新 ' + hh + '（数据可能已过期）'; },
+        noApi: '请在 index.html 中设置 Apps Script 的 URL（API_URL）',
+        waiting: '正在等待服务器更新，请 1～2 分钟后刷新页面',
+        failKeep: '更新失败（显示的是上次的内容）',
+        failFirst: '加载失败，请稍后刷新页面',
+        wd: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
+        head1: function (d) { return (d.getMonth() + 1) + '/' + d.getDate(); },
+        headWd: function (d) { return this.wd[d.getDay()]; },
+        dateLabel: function (d) { return (d.getMonth() + 1) + '月' + d.getDate() + '日(' + this.wd[d.getDay()] + ')'; },
+        to: '～', join: '、', bullet: '• ', rangeSep: ' ～ '
+      }
+    };
+
+    function detectLang() {
+      try {
+        const saved = localStorage.getItem(LANG_KEY);
+        if (saved && I18N[saved]) return saved;
+      } catch (e) {}
+      const n = String(navigator.language || 'ja').toLowerCase();
+      if (n.indexOf('ja') === 0) return 'ja';
+      if (n.indexOf('zh') === 0) return 'zh';
+      return 'en';
+    }
+
+    let lang = detectLang();
+    let statusKind = '';        // 'updated' | 'noApi' | 'waiting' | 'failKeep' | 'failFirst'
+    let copyFlash = false;
+    function T() { return I18N[lang]; }
 
     let data = null;
-    let selectedKey = null;
+    let slotMap = {};           // 日付 -> 状態文字列（'0'空き '1'予定あり '2'選択不可）
+    let selected = new Set();   // 選択中の枠（"日付_時"）
+    let page = 0;
+    let drag = null;
+    let lastClick = null;
+    let cellMap = {};           // 表示中の空き枠 key -> 要素
 
+    // ---- logic:start
+    function key(date, hour) { return date + '_' + hour; }
     function parseDate(s) {
       const p = s.split('-');
       return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
     }
-    function div(cls, text) {
-      const e = document.createElement('div');
+    function dateLabel(s) { return T().dateLabel(parseDate(s)); }
+    function isValidData(d) {
+      return !!d && typeof d.startHour === 'number' && typeof d.endHour === 'number' &&
+        Array.isArray(d.days) && d.days.length > 0 && typeof d.days[0].slots === 'string';
+    }
+    function slotState(date, hour) {
+      const s = slotMap[date];
+      if (!s) return null;
+      return s.charAt(hour - data.startHour) || null;
+    }
+    function isFree(date, hour) { return slotState(date, hour) === '0'; }
+    function freeHours(date) {
+      const out = [];
+      for (let h = data.startHour; h < data.endHour; h++) if (isFree(date, h)) out.push(h);
+      return out;
+    }
+    // 選択中の枠を、連続する時間帯にまとめた文章にする（例: ・10/8(木) 11:00〜15:00）
+    function buildText(sel, days, startHour) {
+      const t = T();
+      const lines = [];
+      days.forEach(function (day) {
+        const hours = [];
+        for (let i = 0; i < day.slots.length; i++) {
+          if (sel.has(key(day.date, startHour + i))) hours.push(startHour + i);
+        }
+        if (!hours.length) return;
+        const ranges = [];
+        let s = hours[0], p = hours[0];
+        for (let i = 1; i < hours.length; i++) {
+          if (hours[i] === p + 1) { p = hours[i]; continue; }
+          ranges.push([s, p + 1]);
+          s = p = hours[i];
+        }
+        ranges.push([s, p + 1]);
+        lines.push(t.bullet + dateLabel(day.date) + ' ' +
+          ranges.map(function (r) { return r[0] + ':00' + t.to + r[1] + ':00'; }).join(t.join));
+      });
+      return lines.join('\n');
+    }
+    function toggleDay(date) {
+      const free = freeHours(date);
+      if (!free.length) return;
+      const allSel = free.every(function (h) { return selected.has(key(date, h)); });
+      free.forEach(function (h) {
+        if (allSel) selected.delete(key(date, h)); else selected.add(key(date, h));
+      });
+    }
+    // ---- logic:end
+
+    function el(tag, cls, text) {
+      const e = document.createElement(tag);
       if (cls) e.className = cls;
       if (text !== undefined) e.textContent = text;
       return e;
     }
+    function $(id) { return document.getElementById(id); }
 
-    // 初回で保存データがないときの仮表示
+    function setData(json) {
+      data = json;
+      slotMap = {};
+      json.days.forEach(function (d) { slotMap[d.date] = d.slots; });
+      // 埋まった・過ぎた枠は選択から外す
+      const next = new Set();
+      selected.forEach(function (k) {
+        const i = k.indexOf('_');
+        if (isFree(k.slice(0, i), Number(k.slice(i + 1)))) next.add(k);
+      });
+      selected = next;
+      const pages = Math.ceil(json.days.length / PER_PAGE);
+      if (page >= pages) page = pages - 1;
+    }
+
     function renderSkeleton() {
-      const grid = document.getElementById('grid');
+      const grid = $('grid');
       grid.innerHTML = '';
-      grid.style.gridTemplateColumns = '40px repeat(7, 1fr)';
+      grid.style.gridTemplateColumns = '44px repeat(' + PER_PAGE + ', 1fr)';
       for (let r = 0; r < 10; r++) {
-        for (let c = 0; c < 8; c++) {
-          grid.appendChild(c === 0 ? div() : div('cell sk'));
-        }
+        for (let c = 0; c <= PER_PAGE; c++) grid.appendChild(c === 0 ? el('div') : el('div', 'cell sk'));
       }
     }
 
     function render() {
-      const grid = document.getElementById('grid');
+      if (!data) return;
+      const t = T();
+      const grid = $('grid');
       grid.innerHTML = '';
-      const days = data.days;
-      const hours = days[0].slots.map(function (s) { return s.hour; });
-      grid.style.gridTemplateColumns = '40px repeat(' + days.length + ', 1fr)';
+      cellMap = {};
+      grid.style.gridTemplateColumns = '44px repeat(' + PER_PAGE + ', 1fr)';
+      const days = data.days.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
 
-      grid.appendChild(div());
-      days.forEach(function (day) {
+      grid.appendChild(el('div'));
+      for (let i = 0; i < PER_PAGE; i++) {
+        const day = days[i];
+        if (!day) { grid.appendChild(el('div')); continue; }
         const d = parseDate(day.date);
-        grid.appendChild(div('label', (d.getMonth() + 1) + '/' + d.getDate() + '(' + WD[d.getDay()] + ')'));
-      });
+        const wd = d.getDay();
+        const head = el('div', 'label day' + (wd === 6 ? ' sat' : wd === 0 ? ' sun' : ''));
+        head.appendChild(el('span', '', t.head1(d)));
+        head.appendChild(el('span', '', t.headWd(d)));
+        head.title = t.dayTip;
+        head.addEventListener('click', function () { toggleDay(day.date); updateSelectionUI(); });
+        grid.appendChild(head);
+      }
 
-      let selectionAlive = false;
-      hours.forEach(function (h, hi) {
-        grid.appendChild(div('hour-label', h + ':00'));
-        days.forEach(function (day) {
-          const slot = day.slots[hi];
-          const key = day.date + '_' + slot.hour;
-          const cell = div('cell ' + (slot.busy ? 'busy' : 'free'));
-          if (!slot.busy) {
-            if (key === selectedKey) { cell.classList.add('selected'); selectionAlive = true; }
-            cell.addEventListener('click', function () { selectSlot(day, slot); });
-          }
+      for (let h = data.startHour; h < data.endHour; h++) {
+        grid.appendChild(el('div', 'hour-label', h + ':00'));
+        for (let i = 0; i < PER_PAGE; i++) {
+          const day = days[i];
+          if (!day) { grid.appendChild(el('div')); continue; }
+          const st = slotState(day.date, h);
+          const cell = el('div', 'cell ' + (st === '0' ? 'free' : st === '1' ? 'busy' : 'past'));
+          cell.dataset.date = day.date;
+          cell.dataset.hour = h;
+          if (st === '0') cellMap[key(day.date, h)] = cell;
           grid.appendChild(cell);
-        });
+        }
+      }
+
+      const pages = Math.ceil(data.days.length / PER_PAGE);
+      $('range').textContent = dateLabel(days[0].date) + t.rangeSep + dateLabel(days[days.length - 1].date);
+      $('prev').disabled = page <= 0;
+      $('next').disabled = page >= pages - 1;
+      updateSelectionUI();
+    }
+
+    function updateSelectionUI() {
+      Object.keys(cellMap).forEach(function (k) {
+        cellMap[k].classList.toggle('selected', selected.has(k));
       });
-
-      // 選択中の枠が埋まった場合は選択を解除
-      if (selectedKey && !selectionAlive) {
-        selectedKey = null;
-        document.getElementById('panel').style.display = 'none';
-      }
+      $('out').value = data ? buildText(selected, data.days, data.startHour) : '';
+      $('count').textContent = selected.size ? T().count(selected.size) : '';
+      $('copy').disabled = !selected.size;
+      $('clear').disabled = !selected.size;
     }
 
-    function slotText(day, slot) {
-      const d = parseDate(day.date);
-      return (d.getMonth() + 1) + '月' + d.getDate() + '日(' + WD[d.getDay()] + ') ' +
-        slot.hour + ':00〜' + (slot.hour + 1) + ':00';
-    }
-
-    function selectSlot(day, slot) {
-      selectedKey = day.date + '_' + slot.hour;
-      render();
-
-      const text = slotText(day, slot);
-      document.getElementById('selected-text').textContent = text;
-      document.getElementById('panel').style.display = 'block';
-      document.getElementById('copy-msg').style.display = 'none';
-
-      document.getElementById('copy-btn').onclick = function () {
-        navigator.clipboard.writeText(text).then(function () {
-          document.getElementById('copy-msg').style.display = 'block';
-        });
-      };
-      document.getElementById('mail-btn').onclick = function () {
-        const subject = encodeURIComponent('打ち合わせ日程のご相談');
-        const body = encodeURIComponent(text + ' でお願いできますでしょうか。');
-        location.href = 'mailto:?subject=' + subject + '&body=' + body;
-      };
-    }
-
-    function setStatus(message, warn) {
-      const s = document.getElementById('status');
-      s.className = warn ? 'warn' : '';
-      if (message) { s.textContent = message; return; }
-      const t = new Date(data.generatedAt);
-      const ageMin = (Date.now() - t.getTime()) / 60000;
-      const hh = ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2);
-      if (ageMin > STALE_MIN) {
+    // ---- 言語の切り替え ----
+    function renderStatus() {
+      const s = $('status');
+      const t = T();
+      s.className = '';
+      s.textContent = '';
+      if (statusKind === 'updated') {
+        if (!data) return;
+        const g = new Date(data.generatedAt);
+        const ageMin = (Date.now() - g.getTime()) / 60000;
+        const hh = ('0' + g.getHours()).slice(-2) + ':' + ('0' + g.getMinutes()).slice(-2);
+        if (ageMin > STALE_MIN) { s.className = 'warn'; s.textContent = t.stale(hh); }
+        else { s.textContent = t.updated(hh); }
+      } else if (statusKind && t[statusKind]) {
         s.className = 'warn';
-        s.textContent = '最終更新 ' + hh + '（データが古い可能性があります）';
-      } else {
-        s.textContent = '最終更新 ' + hh + '（1分ごとに自動更新）';
+        s.textContent = t[statusKind];
       }
     }
+    function setStatus(kind) { statusKind = kind; renderStatus(); }
 
-    function load() {
-      if (API_URL.indexOf('http') !== 0) {
-        setStatus('index.html の API_URL に Apps Script のURLを設定してください', true);
-        return;
+    function applyLang() {
+      const t = T();
+      document.documentElement.lang = lang;
+      document.title = t.title;
+      $('title').textContent = t.title;
+      $('lg-busy').textContent = t.busy;
+      $('lg-free').textContent = t.free;
+      $('lg-sel').textContent = t.sel;
+      $('hint').textContent = t.hint;
+      $('tz').textContent = t.tz;
+      $('prev').textContent = t.prev;
+      $('next').textContent = t.next;
+      $('result-head').textContent = t.resultHead;
+      $('out').placeholder = t.placeholder;
+      $('copy').textContent = copyFlash ? t.copied : t.copy;
+      $('clear').textContent = t.clear;
+      Array.prototype.forEach.call(document.querySelectorAll('.lang button'), function (b) {
+        b.classList.toggle('active', b.dataset.lang === lang);
+      });
+      if (data) render();
+      renderStatus();
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.lang button'), function (b) {
+      b.addEventListener('click', function () {
+        lang = b.dataset.lang;
+        try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+        applyLang();
+      });
+    });
+
+    // ---- クリック・ドラッグ・Shift+クリックでの選択 ----
+    function applyDrag() {
+      const d = drag;
+      const next = new Set(d.snapshot);
+      const lo = Math.min(d.anchorHour, d.currentHour);
+      const hi = Math.max(d.anchorHour, d.currentHour);
+      for (let h = lo; h <= hi; h++) {
+        if (!isFree(d.date, h)) continue;
+        if (d.mode === 'add') next.add(key(d.date, h)); else next.delete(key(d.date, h));
       }
+      selected = next;
+      updateSelectionUI();
+    }
+    function onDown(e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      const cell = e.target && e.target.closest ? e.target.closest('.cell.free') : null;
+      if (!cell) return;
+      const date = cell.dataset.date;
+      const hour = Number(cell.dataset.hour);
+      const anchor = (e.shiftKey && lastClick && lastClick.date === date) ? lastClick.hour : hour;
+      drag = {
+        date: date, anchorHour: anchor, currentHour: hour,
+        mode: selected.has(key(date, hour)) ? 'remove' : 'add',
+        snapshot: new Set(selected)
+      };
+      lastClick = { date: date, hour: hour };
+      applyDrag();
+    }
+    function onMove(e) {
+      if (!drag) return;
+      const t = document.elementFromPoint(e.clientX, e.clientY);
+      const cell = t && t.closest ? t.closest('.cell') : null;
+      if (!cell || cell.dataset.date !== drag.date) return;
+      const h = Number(cell.dataset.hour);
+      if (h !== drag.currentHour) { drag.currentHour = h; applyDrag(); }
+    }
+    function onUp() { drag = null; }
+    function onCancel() {
+      if (!drag) return;
+      selected = drag.snapshot;
+      drag = null;
+      updateSelectionUI();
+    }
+    $('grid').addEventListener('pointerdown', onDown);
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onCancel);
+
+    // ---- ボタン ----
+    $('prev').addEventListener('click', function () { if (page > 0) { page--; render(); } });
+    $('next').addEventListener('click', function () { page++; render(); });
+    $('clear').addEventListener('click', function () { selected = new Set(); updateSelectionUI(); });
+
+    $('copy').addEventListener('click', function () {
+      const text = $('out').value;
+      if (!text) return;
+      function done() {
+        copyFlash = true;
+        $('copy').textContent = T().copied;
+        setTimeout(function () { copyFlash = false; $('copy').textContent = T().copy; }, 1500);
+      }
+      function fallback() {
+        $('out').select();
+        try { if (document.execCommand('copy')) done(); } catch (err) {}
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, fallback);
+      } else {
+        fallback();
+      }
+    });
+
+    // ---- 読み込み・自動更新 ----
+    function load() {
+      if (API_URL.indexOf('http') !== 0) { setStatus('noApi'); return; }
       fetch(API_URL, { cache: 'no-store' })
         .then(function (r) {
           if (!r.ok) throw new Error('HTTP ' + r.status);
           return r.json();
         })
         .then(function (json) {
-          data = json;
+          if (!isValidData(json)) throw new Error('format');
           try { localStorage.setItem(STORE_KEY, JSON.stringify(json)); } catch (e) {}
+          if (drag) return;   // ドラッグ中は表示を差し替えない
+          setData(json);
           render();
-          setStatus();
+          setStatus('updated');
         })
-        .catch(function () {
-          setStatus(data ? '更新に失敗しました（前回の内容を表示中）' : '読み込みに失敗しました。時間をおいて再読み込みしてください', true);
+        .catch(function (err) {
+          if (err && err.message === 'format') setStatus('waiting');
+          else setStatus(data ? 'failKeep' : 'failFirst');
         });
     }
 
+    applyLang();
+
     // 前回のデータがあれば、取得を待たずに先に表示する
     try {
-      const saved = localStorage.getItem(STORE_KEY);
-      if (saved) { data = JSON.parse(saved); render(); setStatus(); }
+      const saved = JSON.parse(localStorage.getItem(STORE_KEY));
+      if (isValidData(saved)) { setData(saved); render(); setStatus('updated'); }
     } catch (e) {}
     if (!data) renderSkeleton();
 
