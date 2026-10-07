@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>空き状況確認</title>
+  <style>
+    body { font-family: sans-serif; padding: 16px; max-width: 480px; margin: 0 auto; color: #222; }
+    h1 { font-size: 16px; font-weight: 500; margin: 0 0 12px; }
+    .legend { display: flex; gap: 16px; font-size: 12px; color: #555; margin-bottom: 12px; }
+    .legend span.box { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+    .busy-box { background: #d33; }
+    .free-box { border: 1px solid #999; }
+    #grid { display: grid; gap: 4px; }
+    .cell { height: 24px; border-radius: 4px; }
+    .busy { background: #d33; }
+    .free { border: 1px solid #999; background: #fff; cursor: pointer; }
+    .free:hover { background: #f0f0f0; }
+    .selected { outline: 2px solid #1a73e8; }
+    .label { font-size: 11px; color: #555; text-align: center; }
+    .hour-label { font-size: 10px; color: #888; display: flex; align-items: center; }
+    .sk { background: #eee; animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+    #panel { display: none; margin-top: 16px; background: #f5f5f5; border-radius: 6px; padding: 12px; }
+    #panel p.hint { font-size: 12px; color: #888; margin: 0 0 4px; }
+    #panel p.value { font-size: 16px; font-weight: 500; margin: 0 0 12px; }
+    button { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer; }
+    #status { font-size: 11px; color: #888; margin-top: 16px; }
+    #status.warn { color: #c0392b; }
+  </style>
+</head>
+<body>
+  <h1>空き状況</h1>
+  <div class="legend">
+    <div><span class="box busy-box"></span>予定あり</div>
+    <div><span class="box free-box"></span>空き（クリックで選択）</div>
+  </div>
+
+  <div id="grid"></div>
+
+  <div id="panel">
+    <p class="hint">選択した日時</p>
+    <p class="value" id="selected-text"></p>
+    <div style="display:flex; gap:8px;">
+      <button id="copy-btn">コピー</button>
+      <button id="mail-btn">メール作成</button>
+    </div>
+    <p id="copy-msg" style="font-size:12px; color:#0a7a3c; margin-top:8px; display:none;">コピーしました</p>
+  </div>
+
+  <p id="status"></p>
+
+  <script>
+    // ★ Apps ScriptのURL（末尾が /exec）をここに貼る
+    const API_URL = 'https://script.google.com/macros/s/…/exec';
+
+    const STORE_KEY = 'availability-v1';
+    const REFRESH_MS = 60000;   // 1分ごとに自動更新
+    const STALE_MIN = 10;       // これ以上古いデータは警告を出す
+    const WD = ['日', '月', '火', '水', '木', '金', '土'];
+
+    let data = null;
+    let selectedKey = null;
+
+    function parseDate(s) {
+      const p = s.split('-');
+      return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    }
+    function div(cls, text) {
+      const e = document.createElement('div');
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+
+    // 初回で保存データがないときの仮表示
+    function renderSkeleton() {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      grid.style.gridTemplateColumns = '40px repeat(7, 1fr)';
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 8; c++) {
+          grid.appendChild(c === 0 ? div() : div('cell sk'));
+        }
+      }
+    }
+
+    function render() {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      const days = data.days;
+      const hours = days[0].slots.map(function (s) { return s.hour; });
+      grid.style.gridTemplateColumns = '40px repeat(' + days.length + ', 1fr)';
+
+      grid.appendChild(div());
+      days.forEach(function (day) {
+        const d = parseDate(day.date);
+        grid.appendChild(div('label', (d.getMonth() + 1) + '/' + d.getDate() + '(' + WD[d.getDay()] + ')'));
+      });
+
+      let selectionAlive = false;
+      hours.forEach(function (h, hi) {
+        grid.appendChild(div('hour-label', h + ':00'));
+        days.forEach(function (day) {
+          const slot = day.slots[hi];
+          const key = day.date + '_' + slot.hour;
+          const cell = div('cell ' + (slot.busy ? 'busy' : 'free'));
+          if (!slot.busy) {
+            if (key === selectedKey) { cell.classList.add('selected'); selectionAlive = true; }
+            cell.addEventListener('click', function () { selectSlot(day, slot); });
+          }
+          grid.appendChild(cell);
+        });
+      });
+
+      // 選択中の枠が埋まった場合は選択を解除
+      if (selectedKey && !selectionAlive) {
+        selectedKey = null;
+        document.getElementById('panel').style.display = 'none';
+      }
+    }
+
+    function slotText(day, slot) {
+      const d = parseDate(day.date);
+      return (d.getMonth() + 1) + '月' + d.getDate() + '日(' + WD[d.getDay()] + ') ' +
+        slot.hour + ':00〜' + (slot.hour + 1) + ':00';
+    }
+
+    function selectSlot(day, slot) {
+      selectedKey = day.date + '_' + slot.hour;
+      render();
+
+      const text = slotText(day, slot);
+      document.getElementById('selected-text').textContent = text;
+      document.getElementById('panel').style.display = 'block';
+      document.getElementById('copy-msg').style.display = 'none';
+
+      document.getElementById('copy-btn').onclick = function () {
+        navigator.clipboard.writeText(text).then(function () {
+          document.getElementById('copy-msg').style.display = 'block';
+        });
+      };
+      document.getElementById('mail-btn').onclick = function () {
+        const subject = encodeURIComponent('打ち合わせ日程のご相談');
+        const body = encodeURIComponent(text + ' でお願いできますでしょうか。');
+        location.href = 'mailto:?subject=' + subject + '&body=' + body;
+      };
+    }
+
+    function setStatus(message, warn) {
+      const s = document.getElementById('status');
+      s.className = warn ? 'warn' : '';
+      if (message) { s.textContent = message; return; }
+      const t = new Date(data.generatedAt);
+      const ageMin = (Date.now() - t.getTime()) / 60000;
+      const hh = ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2);
+      if (ageMin > STALE_MIN) {
+        s.className = 'warn';
+        s.textContent = '最終更新 ' + hh + '（データが古い可能性があります）';
+      } else {
+        s.textContent = '最終更新 ' + hh + '（1分ごとに自動更新）';
+      }
+    }
+
+    function load() {
+      if (API_URL.indexOf('http') !== 0) {
+        setStatus('index.html の API_URL に Apps Script のURLを設定してください', true);
+        return;
+      }
+      fetch(API_URL, { cache: 'no-store' })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function (json) {
+          data = json;
+          try { localStorage.setItem(STORE_KEY, JSON.stringify(json)); } catch (e) {}
+          render();
+          setStatus();
+        })
+        .catch(function () {
+          setStatus(data ? '更新に失敗しました（前回の内容を表示中）' : '読み込みに失敗しました。時間をおいて再読み込みしてください', true);
+        });
+    }
+
+    // 前回のデータがあれば、取得を待たずに先に表示する
+    try {
+      const saved = localStorage.getItem(STORE_KEY);
+      if (saved) { data = JSON.parse(saved); render(); setStatus(); }
+    } catch (e) {}
+    if (!data) renderSkeleton();
+
+    load();
+    setInterval(load, REFRESH_MS);
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) load();
+    });
+  </script>
+</body>
+</html>
