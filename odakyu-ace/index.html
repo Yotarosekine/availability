@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>小田急エース ロボット選定のご提案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 実務の提案書。断定的で簡潔、装飾は最小限
+   IDEA: 駅構内の案内サイン（色地に白文字の行先表示）
+   PICTURE: 清掃タイプ×視認性の選定マトリクス、機種ごとの縮尺側面図
+   COLOUR and TYPE: 新日本ビルサービスの緑＋白、注意喚起の赤を1色。BIZ UDPGothic
+   LAYOUT: 青帯の表題＋マトリクス → 本文帯 → タブ式スペック → 基準・除外 */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#0c1611);--ink:light-dark(#15221b,#e5f0e9);--sub:light-dark(#4d6356,#9db6a6);
+--blue:light-dark(#17804a,#3fae6f);--blue2:light-dark(#e9f5ee,#11271a);--line:light-dark(#d3e3d9,#24392c);
+--red:light-dark(#c8321f,#ff6e5a);--card:light-dark(#f5faf7,#101d15);--onblue:#fff}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 "BIZ UDPGothic","Hiragino Sans","Yu Gothic",sans-serif;overflow-x:clip}
+.band{padding:clamp(28px,4vw,60px) max(5vw,16px)}
+.in{max-width:1180px;margin:0 auto}
+h1{font-size:clamp(28px,4.2vw,44px);line-height:1.2;margin:0 0 14px;text-wrap:balance;font-weight:700}
+h2{font-size:clamp(22px,2.6vw,28px);line-height:1.3;margin:0 0 18px;text-wrap:balance}
+h3{font-size:18px;margin:0 0 8px;line-height:1.4}
+p{margin:0 0 12px;max-width:70ch}
+a{color:var(--blue)}
+.hero{background:#17804a;color:var(--onblue)}
+.hero a{color:#fff}
+.meta{font-size:14px;opacity:.9;margin-bottom:22px}
+.lead{font-size:17px;max-width:62ch}
+.mx{display:grid;grid-template-columns:9.5em minmax(0,1fr) minmax(0,1fr);gap:2px;background:rgba(255,255,255,.28);border-radius:10px;overflow:hidden;margin-top:26px}
+.mx>div{background:#136c3e;padding:12px 14px;font-size:15px}
+.mx .h{background:#0e5732;font-weight:700;font-size:14px}
+.mx .rh{background:#0e5732;font-weight:700}
+.mx b{display:inline-block;background:#fff;color:#17804a;border-radius:4px;padding:1px 7px;margin:2px 4px 2px 0;font-size:14px}
+.mx i{font-style:normal;display:inline-block;border:1px solid rgba(255,255,255,.6);border-radius:4px;padding:0 6px;margin:2px 4px 2px 0;font-size:14px}
+.mx small{display:block;opacity:.85;font-size:13px;margin-top:4px}
+.key{font-size:13px;margin-top:10px;opacity:.9}
+.key b{background:#fff;color:#17804a;border-radius:4px;padding:0 6px}
+.key i{font-style:normal;border:1px solid rgba(255,255,255,.6);border-radius:4px;padding:0 6px}
+nav.scroll{display:flex;gap:8px;padding:12px max(5vw,16px);border-bottom:1px solid var(--line);background:var(--bg)}
+nav.scroll a{flex:none;text-decoration:none;color:var(--ink);font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:999px;min-height:44px;display:flex;align-items:center}
+@media(min-width:900px){nav.scroll{position:sticky;top:0;z-index:5}}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:18px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.box ul,.box ol{margin:6px 0 0;padding-left:1.3em}.box li{margin-bottom:6px}
+.note{font-size:14px;color:var(--sub)}
+.tag{display:inline-block;font-size:13px;padding:1px 8px;border-radius:4px;background:var(--blue2);color:var(--blue);font-weight:700;margin-right:6px;white-space:nowrap}
+.tag.r{background:transparent;border:1px solid var(--red);color:var(--red)}
+.alt{background:var(--blue2)}
+.tabs{display:flex;gap:6px;padding-bottom:6px}
+.tabs button{flex:none;font:inherit;font-size:15px;min-height:44px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
+.tabs button:focus-visible,nav a:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.tabs .sep{flex:none;white-space:nowrap;align-self:center;font-size:13px;color:var(--sub);padding:0 4px 0 10px}
+.panel{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:24px;margin-top:14px}
+.pic{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column}
+.pic svg{width:100%;height:auto;display:block}
+.pic img{width:100%;height:auto;display:block;border-radius:6px;background:#fff}
+.pic .mini{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}.pic .mini svg{max-height:190px}
+.pic .cap{font-size:13px;color:var(--sub);margin-top:8px}
+.pname{font-size:clamp(22px,3vw,30px);font-weight:700;line-height:1.2;margin:0 0 4px}
+.pmk{font-size:14px;color:var(--sub);margin-bottom:12px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:left;vertical-align:top}
+.spec th{width:11.5em;color:var(--sub);font-weight:700;font-size:14px}
+.spec tr.em td{font-weight:700;color:var(--blue)}
+.vis{display:grid;gap:8px;margin-top:10px}
+.vr{display:grid;grid-template-columns:9em minmax(0,1fr) 7.5em;gap:10px;align-items:center;font-size:14px}
+.vt{position:relative;height:20px;background:var(--card);border-radius:4px}
+.vt span{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--blue)}
+.vt span.x{background:transparent;border:2px dashed var(--red)}
+.vr .n{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+ol.crit{counter-reset:c;list-style:none;padding:0;margin:0;display:grid;gap:14px}
+ol.crit>li{counter-increment:c;display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+ol.crit>li::before{content:counter(c);width:40px;height:40px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px}
+.ex td:first-child{font-weight:700;white-space:nowrap}
+footer{font-size:13px;color:var(--sub)}
+.sim{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:18px;align-items:start}
+.lbl{font-size:13px;font-weight:700;color:var(--sub);margin:12px 0 6px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}.seg.scroll{flex-wrap:nowrap;padding-bottom:4px}
+.seg button{flex:none;font:inherit;font-size:15px;min-height:44px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed=true],.seg button[aria-selected=true]{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
+.seg button:focus-visible,.btn:focus-visible,.chk input:focus-visible,.qty button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.chk{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.chk input{width:20px;height:20px;margin:3px 0 0;accent-color:var(--blue)}
+.chk .p{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700}
+.chk small{display:block;color:var(--sub);font-size:13px;line-height:1.5}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.qty button{width:44px;height:44px;border:0;background:var(--card);color:var(--ink);font-size:20px;cursor:pointer}
+.qty output{min-width:3em;text-align:center;font-weight:700}
+.sub{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:14px;padding-top:12px;border-top:2px solid var(--ink);flex-wrap:wrap}
+.sub b{font-size:22px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.btn{font:inherit;font-size:15px;min-height:44px;padding:8px 18px;border-radius:8px;border:1px solid var(--blue);background:var(--blue);color:#fff;font-weight:700;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--blue)}
+.line{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:var(--bg)}
+.line .hd{display:flex;justify-content:space-between;gap:8px;align-items:start}
+.line ul{margin:6px 0 0;padding-left:1.2em;font-size:14px;color:var(--sub)}
+.line .x{border:0;background:none;color:var(--red);font:inherit;font-size:14px;min-height:44px;padding:0 4px;cursor:pointer;white-space:nowrap}
+.money{white-space:nowrap;font-variant-numeric:tabular-nums}
+.tot{margin:16px 0 12px;padding:14px 16px;border-radius:8px;background:var(--blue);color:#fff}
+.tot div{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.tot b{font-size:clamp(24px,3vw,32px);white-space:nowrap;font-variant-numeric:tabular-nums}
+.empty{color:var(--sub);font-size:14px;padding:8px 0}
+.na{padding:14px;border:1px dashed var(--line);border-radius:8px;color:var(--sub);margin-top:12px}
+@media(max-width:820px){.sim{grid-template-columns:minmax(0,1fr)}}
+pre,.scroll{overflow-x:auto}.scroll a{flex:none}html{scroll-padding-top:72px}
+@media(max-width:820px){.panel{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){
+ .mx{grid-template-columns:minmax(0,1fr)}.mx .h{display:none}.mx .rh{background:#0a4426}
+ .mx>div[data-l]::before{content:attr(data-l);display:block;font-size:12px;opacity:.8;margin-bottom:2px}
+ .vr{grid-template-columns:minmax(0,1fr) 6.5em}.vr .vt{grid-column:1/-1;grid-row:2}
+ table{font-size:14px}.spec th{width:7.5em}
+ .stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:6em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:5.5em;margin-inline-start:-6em;white-space:normal;color:var(--sub);font-size:13px}}
+@media(prefers-reduced-motion:no-preference){.panel{animation:fi .25s ease}@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1}}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+
+<header class="band hero">
+<div class="in">
+<div class="meta">株式会社小田急ビルサービス 様　｜　株式会社新日本ビルサービス DX推進部　｜　2026年11月</div>
+<h1>小田急エース 床面清掃ロボット<br>トライアル機種選定のご提案</h1>
+<p class="lead">小田急エースでは床面清掃を1日に複数回実施しており、作業負担が大きい。この床面清掃をロボットに置き換え、任せていくためのトライアルとして、導入機種の考え方を以下に整理する。機種は「清掃タイプ（水拭き・吸引・両方）」と「お客様からの視認性（本体サイズ）」の2軸で分かれる。</p>
+
+<div class="mx" role="table" aria-label="清掃タイプと視認性による候補機種">
+ <div class="h" role="columnheader">清掃タイプ</div>
+ <div class="h" role="columnheader">標準サイズ（Phantas・CC1程度）で視認性は十分と考える場合</div>
+ <div class="h" role="columnheader">より大きいロボットで視認性を高めたい場合</div>
+
+ <div class="rh" role="rowheader">吸引のみ<br>（掃除機がけ）</div>
+ <div data-l="標準サイズ"><b>Phantas</b><b>CC1</b></div>
+ <div data-l="大型・高視認"><b>MT1 MAX</b><i>Beetle</i><i>CENOBOTS SP50</i><small>MT1 MAXはパトランプ付きで視認性がさらに高い。Beetleはコスト面から優先度を下げている</small></div>
+
+ <div class="rh" role="rowheader">水拭き</div>
+ <div data-l="標準サイズ"><b>Phantas</b><b>CC1</b></div>
+ <div data-l="大型・高視認"><b>BG1</b><i>OMNIE</i><i>MIRA</i><i>CENOBOTS L50</i><small>BG1はウェット専用機</small></div>
+
+ <div class="rh" role="rowheader">吸引と<br>水拭きの両方</div>
+ <div data-l="標準サイズ"><b>Phantas</b><i>CC1</i><small>Phantasはバケツの入替のみで切替可能。CC1はブラシ交換が必要</small></div>
+ <div data-l="大型・高視認"><i>MT1 MAX＋BG1の併用</i><small>ドライ機とウェット機を分けて運用する場合（要検討）</small></div>
+</div>
+<div class="key"><b>推奨</b> 推奨4機種（Phantas・CC1・BG1・MT1 MAX）　<i>参考</i> 選択肢として検討可能な機種</div>
+</div>
+</header>
+
+<nav class="scroll" aria-label="目次">
+<a href="#summary">結論</a><a href="#types">清掃タイプ別の選択肢</a><a href="#specs">機種別スペック</a><a href="#cost">導入費用</a><a href="#visibility">視認性（高さ比較）</a><a href="#criteria">トライアルの選定基準</a><a href="#excluded">除外した機種</a><a href="#confirm">ご確認事項</a>
+</nav>
+
+<section class="band" id="summary"><div class="in">
+<h2>結論：Phantas・CC1・BG1・MT1 MAXを軸に、運用方針に合わせて選定する</h2>
+<div class="grid2">
+<div class="box"><h3>推奨機種</h3>
+<p>最終的には小田急ビルサービス様としてどういう運用がしたいかによるが、<strong>Phantas・CC1・BG1・MT1 MAX</strong>あたりが良いと考える。</p>
+<ul><li>吸引と水拭きの両方を1台で行う場合は、モード切替の手間が少ない<strong>Phantas</strong>に分がある</li>
+<li>視認性を重視する場合は、パトランプ付きの<strong>MT1 MAX</strong>（ドライ）、大型の<strong>BG1</strong>（ウェット）が候補となる</li></ul></div>
+<div class="box"><h3>メーカー選定の考え方</h3>
+<p>メーカーと密にコミュニケーションを取り、やり取りができるところとなると、<strong>Gausium</strong>か<strong>Pudu</strong>の2択になると考える。トライアル中の設定変更や不具合対応をメーカーと直接詰められることを重視している。</p>
+<p class="note">Beetle・OMNIE・MIRA・CENOBOTSも選択肢には入れているが、優先順位は推奨4機種より低い。</p></div>
+</div>
+</div></section>
+
+<section class="band alt" id="types"><div class="in">
+<h2>清掃タイプ別の選択肢</h2>
+<p>ロボットを動かす上での条件として、水拭きをするか、吸引（掃除機がけ）をするか、またはその両方をするかでロボットの選定が分かれる。</p>
+<div class="grid2">
+<div class="box"><h3><span class="tag">1</span>掃除機がけのみの場合</h3>
+<table class="stack"><thead><tr><th>機種</th><th>清掃面積の目安</th></tr></thead><tbody>
+<tr><td>(a) Gausium Phantas</td><td>約300㎡/h</td></tr>
+<tr><td>(b) Pudu CC1</td><td>約350㎡/h</td></tr>
+<tr><td>(c) Pudu MT1 MAX</td><td>約600㎡/h</td></tr>
+<tr><td>Gausium Beetle</td><td>MT1 MAXと同程度</td></tr>
+<tr><td>CENOBOTS SP50（ドライ専用）</td><td>トライアルで確認</td></tr>
+</tbody></table>
+<p class="note" style="margin-top:10px">※清掃面積は清掃スピードや設定によって大きく異なる点に留意いただきたい。<br>Beetleも選択肢の1つとなるが、コストが少し高いため優先順位は低い。MT1 MAXはパトランプが付いているため、Beetleより視認性はさらに高くなると考える。</p></div>
+
+<div class="box"><h3><span class="tag">2</span>水拭きの場合</h3>
+<ul><li>(a) Gausium Phantas</li><li>(b) Pudu CC1</li><li>(c) Pudu BG1（ウェット専用機）</li></ul>
+<p style="margin-top:10px">ウェット専用で言うと、Gausiumの<strong>OMNIE</strong>や、さらに大きいサイズでは<strong>MIRA</strong>も選択肢に上がる。CENOBOTSのウェット専用機（<strong>L50</strong>）も検討対象となる。</p></div>
+
+<div class="box"><h3><span class="tag">3</span>掃除機がけと水拭きの両方をやりたい場合</h3>
+<p><strong>Phantasに分がある</strong>と考える。</p>
+<ul><li><strong>CC1</strong>：から拭きから水拭きに変えるときにブラシを変える必要があり、作業の手間が増える懸念がある</li>
+<li><strong>Phantas</strong>：バケツを入れ替えるだけで切り替えられるため、少し楽になる</li></ul></div>
+
+<div class="box"><h3><span class="tag">視認性</span>本体サイズの考え方</h3>
+<p>お客様にとっての視認性（目視で確認できるかどうか）も選定を分ける。一般的なPhantasやCC1のサイズで十分視認性がよいと考えるか、もっと大きいロボットの方がよいと考えるかで状況は変わる。</p>
+<p class="note">各機種の高さは<a href="#visibility">視認性（高さ比較）</a>を参照。</p></div>
+</div>
+</div></section>
+
+<section class="band" id="specs"><div class="in">
+<h2>機種別スペック</h2>
+<p class="note">タブで機種を切り替えると、本体サイズ・タンク容量・清掃効率などの基本スペックを確認できる。数値はメーカー公表値（2026年11月時点）。「当社目安」は実運用を想定した清掃面積で、清掃スピードや設定によって大きく異なる。</p>
+<div class="tabs scroll" role="tablist" aria-label="機種" id="tabs"></div>
+<div id="panel" role="tabpanel" aria-live="polite"></div>
+</div></section>
+
+<section class="band alt" id="cost"><div class="in">
+<h2>導入費用シミュレーション（らくロボはけん）</h2>
+<p class="note">機種と契約内容を選んで「見積に追加」を押すと、見積内訳に追加されます。初期設定は5年契約で、本体・みまもりサポート・通信費の基本構成です。金額はすべて月額・税抜です。</p>
+<div class="sim">
+ <div class="box">
+  <div class="lbl">機種</div>
+  <div class="seg scroll" id="s-robot" role="tablist" aria-label="見積する機種"></div>
+  <div id="s-body"></div>
+ </div>
+ <div class="box">
+  <h3>見積内訳</h3>
+  <div id="s-cart"></div>
+  <div class="lbl" style="margin-top:16px">共通オプション（施設ごと）</div>
+  <div id="s-common"></div>
+  <div class="tot" id="s-total"></div>
+  <button class="btn ghost" id="s-copy" type="button">内訳をコピー</button> <span class="note" id="s-msg" aria-live="polite"></span>
+ </div>
+</div>
+<p class="note" style="margin-top:14px">表示金額は2026年11月時点の「らくロボはけん」月額料金（税抜）です。OMNIE・MIRA・CENOBOTSの費用は、運用内容を伺ったうえで別途協議とさせていただきます。正式な金額はお見積書にてご提示いたします。</p>
+</div></section>
+
+<section class="band" id="visibility"><div class="in">
+<h2>視認性：本体の高さ比較</h2>
+<p>往来の中でお客様が目視でロボットを認識できるかの参考として、本体の高さを並べた。破線は警告灯・視認フラッグを含めた高さ。</p>
+<div class="vis" id="vis"></div>
+<p class="note" style="margin-top:10px">目盛りの右端は1,700mm（成人の身長の目安）。</p>
+</div></section>
+
+<section class="band alt" id="criteria"><div class="in">
+<h2>トライアルの選定基準・運用設計</h2>
+<ol class="crit">
+<li><div><h3>何時に動かすか</h3><p>往来が非常に激しい場所のため、土日祝日のトレンドや平日のトレンドを理解した上で、動かす時間の設定を細かく変更する必要がある。</p></div></li>
+<li><div><h3>センサーの感度</h3><p>往来が激しい中でロボットを動かすため、センサーの感度は高すぎても問題になる。人の往来に反応して停止・回避を繰り返さない設定を、トライアルの中で詰める。</p></div></li>
+<li><div><h3>トラブル・衝突への対応</h3><p>多少の衝突やトラブルは発生する前提で、現場側のタブレット等でつぶさに状況を確認できる環境を構築した方がよい。</p><p>例えば、新日本ビルサービス側でシステムを構築し、コミュニケーションツールのLINEにロボットのトラブル通知が届く仕組みを作ることは可能と考える。<span class="tag r">要検証</span>小田急ビルサービス様としてセキュリティ上の問題がないかの確認が必要である。</p></div></li>
+<li><div><h3>いたずら対策</h3><p>往来が激しい中では、高い確率でいたずらをされると考える。その最たる例が緊急停止ボタンを押されることで、押されるとロボットが止まってしまう。</p><ul style="margin:0;padding-left:1.3em"><li>状況によっては、緊急停止ボタンに保護カバーを付け、簡単には押せないようにする</li><li>ロボットを設置（待機）させる場所にはバリケード等を設置し、簡単に触れることのできない環境を作る</li></ul></div></li>
+<li><div><h3>イレギュラー時の対応</h3><p>建物内に立て看板が急に立ったり、チェーンが張られたりした時は、ロボットの稼働を停止する必要がある。</p><ul style="margin:0;padding-left:1.3em"><li>突発的なイレギュラーは、人の手でカバーすることを推奨する</li><li>定期的に行われる催事は運用側で対応する。同じマップで「催事が行われているバージョン」と「行われていないバージョン」の2パターンを作っておくことで、運用上カバーできる（御社物件ではグリナード永山で同様の運用を行っている）</li></ul></div></li>
+</ol>
+</div></section>
+
+<section class="band" id="excluded"><div class="in">
+<h2>選定から除外した機種と理由</h2>
+<table class="stack ex"><thead><tr><th>機種</th><th>除外理由</th></tr></thead><tbody>
+<tr><td>Pudu ET1</td><td>本体が小さく視認性が悪い。清掃効率も低いため除外した。</td></tr>
+<tr><td>KEENON C40</td><td>あえて選ぶ理由となる大きな特徴がない。コストは高くはないが安くもなく、その割にソフトウェアの安定性に欠ける面があるため除外した。</td></tr>
+<tr><td>国内メーカー製</td><td>メーカーとの直接連携（不具合対応・ソフトウェア更新）の体制面から、今回のトライアルでは対象外とした。</td></tr>
+</tbody></table>
+<p class="note" style="margin-top:12px">上記を踏まえ、メーカーと密にコミュニケーションを取ってやり取りができるGausium・Puduの2社から選定している。</p>
+</div></section>
+
+<section class="band alt" id="confirm"><div class="in">
+<h2>ご確認事項</h2>
+<div class="grid2">
+<div class="box"><h3>運用方針</h3><ul><li>清掃タイプ：吸引のみ／水拭きのみ／両方</li><li>視認性：標準サイズ（Phantas・CC1程度）で十分か、より大きいロボットが望ましいか</li></ul></div>
+<div class="box"><h3>運用環境</h3><ul><li>土日祝日・平日の時間帯別の往来傾向</li><li>定期的な催事の有無と頻度（催事版マップ作成の要否）</li><li>待機場所のバリケード設置可否</li><li>LINEへのトラブル通知に関するセキュリティ上の可否</li></ul></div>
+</div>
+</div></section>
+
+<footer class="band"><div class="in">スペックは各メーカー公式サイトの公表値（2026年11月時点）による。メーカー試験値であり、実際の清掃性能は環境・設定により異なる。</div></footer>
+
+<script>
+{
+const R=[
+{id:'phantas',grp:'推奨',name:'Phantas',mk:'Gausium',type:'ドライ・ウェット両対応（4in1）',L:590,W:455,H:620,url:'https://gausium.com/specs/phantas/',
+ rows:[['本体サイズ','L590 × W455 × H620 mm'],['重量','65 kg'],['清掃モード','洗浄（水拭き）・吸引・掃き・ダストモップ'],['清掃幅','吸引・掃き 465 mm／洗浄・ダストモップ 330 mm'],['清掃効率（当社目安）','約300 ㎡/h'],['清掃効率（メーカー）','実用 350〜700 ㎡/h（理論最大：洗浄 1,188／吸引 1,674 ㎡/h）'],['連続稼働時間','洗浄 4.5 h／吸引 4.5 h／掃き 6 h／ダストモップ 10 h'],['充電時間','約2 h'],['水タンク','清水 11.5 L／汚水 10.5 L'],['ダスト容量','ダストバッグ 6 L（3〜7日分）、ゴミ箱 1 L'],['最小通過幅','650 mm'],['その他','静音モード（60 dB以下）']],
+ note:'吸引と水拭きの切替はバケツの入替のみ。両方を1台で行う場合に分がある。'},
+{id:'cc1',grp:'推奨',name:'CC1',mk:'Pudu',type:'ドライ・ウェット両対応（4in1）',L:629,W:552,H:695,url:'https://www.pudurobotics.com/products/cc1',
+ rows:[['本体サイズ','L629 × W552 × H695 mm'],['重量','75 kg'],['清掃モード','洗浄（水拭き）・掃き・吸引・モップ'],['清掃幅','約500 mm'],['清掃効率（当社目安）','約350 ㎡/h'],['清掃効率（メーカー）','全面清掃 700〜1,000 ㎡/h（スポット清掃 1,500〜3,000 ㎡/h）'],['連続稼働時間','洗浄 5 h／掃き＋吸引＋モップ 5 h／カーペット吸引 4 h／静音モップ 9 h'],['充電時間','約3 h'],['水タンク','清水 15 L／汚水 15 L'],['ダスト容量','2.5 L（ダストバッグ 6 L）'],['最小通過幅','700 mm'],['その他','吸引力 最大17,000 Pa']],
+ note:'から拭きから水拭きに変える際にブラシ交換が必要で、手間が増える懸念がある。'},
+{id:'bg1',grp:'推奨',name:'BG1',mk:'Pudu',type:'ウェット専用（掃き＋洗浄一体）',L:1195,W:760,H:1303,url:'https://www.pudurobotics.com/products/pudu-bg1-series',
+ rows:[['本体サイズ','L1,195 × W760 × H1,303 mm（スクイジー含む）／L1,120 × W660（スクイジー除く）'],['重量','約344 kg'],['清掃モード','掃き＋洗浄の一体清掃、エッジ洗浄、洗剤自動投入（吸引機能なし）'],['清掃幅','550 mm（サイドブラシ含め 708 mm）'],['清掃効率（当社目安）','トライアルで確認'],['清掃効率（メーカー）','全面清掃 最大2,000 ㎡/h（スポット清掃 最大6,000 ㎡/h）'],['連続稼働時間','最大7.5 h'],['充電時間','約3 h（AC180 V以上）／約4.5 h（AC180 V以下）'],['水タンク','清水 75 L／汚水 60 L'],['ダスト容量','—'],['最小通過幅','850 mm']],
+ note:'ウェット専用の大型機。高さ1.3 mで視認性は高い。重量と通路幅の確認が必要。'},
+{id:'mt1max',grp:'推奨',name:'MT1 MAX',mk:'Pudu',type:'ドライ専用（スイーパー）',L:840,W:600,H:675,lamp:1200,url:'https://www.pudurobotics.com/products/mt1-max',
+ rows:[['本体サイズ','L840 × W600 × H675 mm'],['重量','85 kg'],['清掃モード','掃き・吸引によるドライ清掃'],['清掃幅','700 mm（サイドブラシ含む）'],['清掃効率（当社目安）','約600 ㎡/h'],['清掃効率（メーカー）','全面清掃 最大2,200 ㎡/h（スポット清掃 最大7,000 ㎡/h）'],['連続稼働時間','5〜10 h（標準モード 8 h）'],['充電時間','3.5 h未満'],['水タンク','—（ドライ専用）'],['ダスト容量','35 L'],['最小通過幅','750 mm'],['視認性','高さ1.2 mの警告灯（パトランプ）、セーフティ投影ライト、音・光による警報']],
+ note:'パトランプ付きのため、同等の清掃効率のBeetleより視認性はさらに高いと考える。'},
+{id:'beetle',grp:'参考',name:'Beetle',mk:'Gausium',type:'ドライ専用（スイーパー）',L:960,W:650,H:680,lamp:1510,url:'https://gausium.com/specs/beetle/',
+ rows:[['本体サイズ','L960 × W650 × H680 mm（サイドブラシ含め L990 × W750、視認フラッグ含め H1,510）'],['重量','102 kg（標準）／112 kg（Pro）'],['清掃モード','ドライ清掃（掃き・吸引）'],['清掃幅','750 mm'],['清掃効率（当社目安）','MT1 MAXと同程度（約600 ㎡/h）'],['清掃効率（メーカー）','理論最大 3,240 ㎡/h'],['連続稼働時間','3 h（標準）／5 h（Pro）'],['充電時間','2.5 h未満'],['水タンク','—（ドライ専用）'],['ダスト容量','45 L'],['最小Uターン幅','1,200 mm'],['視認性','Pro仕様に視認フラッグ・ストロボライト・ヘッドライト']],
+ note:'コストが少し高いため、選択肢には入れるが優先順位は低い。'},
+{id:'omnie',grp:'参考',name:'OMNIE',mk:'Gausium',type:'ウェット専用',L:810,W:700,H:1070,url:'https://gausium.com/specs/omnie/',
+ rows:[['本体サイズ','L810 × W700 × H1,070 mm'],['重量','157 kg（ディスクブラシ）／148 kg（ローラーブラシ）'],['清掃モード','洗浄・ダストモップ・掃き（掃きはローラーブラシ仕様）'],['清掃幅','520 mm（ディスク）／406 mm（ローラー、サイドブラシ含め 780 mm）'],['清掃効率（当社目安）','トライアルで確認'],['清掃効率（メーカー）','洗浄 理論最大 2,621 ㎡/h（ディスク）／2,046 ㎡/h（ローラー）'],['連続稼働時間','洗浄 3 h／ダストモップ 8 h／掃き 8 h'],['充電時間','2.5 h'],['水タンク','清水 33 L／汚水 24 L'],['最小通過幅','800 mm']],
+ note:'ウェット専用の選択肢。'},
+{id:'mira',grp:'参考',name:'MIRA',mk:'Gausium',type:'ウェット中心（洗浄・掃き・ダストモップ）',L:680,W:550,H:900,url:'https://gausium.com/specs/mira/',
+ rows:[['本体サイズ','L680 × W550 × H900 mm'],['重量','134 kg'],['清掃モード','洗浄・掃き・ダストモップ'],['清掃幅','洗浄 400 mm／掃き 750 mm／ダストモップ 720 mm'],['清掃効率（当社目安）','トライアルで確認'],['清掃効率（メーカー）','洗浄 理論最大 2,016 ㎡/h'],['連続稼働時間','洗浄 4 h以上／掃き 8 h以上／ダストモップ 10 h以上'],['充電時間','2.5 h'],['水タンク','清水 22 L／汚水 20 L'],['最小通過幅','660 mm']],
+ note:'ウェット専用で、さらに大きいサイズの選択肢。'},
+{id:'sp50',grp:'参考',name:'CENOBOTS SP50',mk:'CENOBOTS',type:'ドライ専用（吸引スイーパー）',L:855,W:600,H:1050,url:'https://cenobots.com/products/sp50',
+ rows:[['本体サイズ','L855 × W600 × H1,050 mm（サイドブラシ除く）'],['重量','—'],['清掃モード','全面清掃・スポット清掃（ドライ）'],['清掃幅','720 mm'],['清掃効率（当社目安）','トライアルで確認'],['清掃効率（メーカー）','全面清掃 最大1,987 ㎡/h（スポット清掃 最大15,550 ㎡/h）'],['連続稼働時間','最大13 h'],['水タンク','—（ドライ専用）'],['ダスト容量','フィルターバッグ 18 L＋ゴミトレイ 5 L']],
+ note:'CENOBOTSのドライ専用機。選択肢の1つとして検討できる。'},
+{id:'l50',grp:'参考',name:'CENOBOTS L50',mk:'CENOBOTS',type:'ウェット専用（スクラバー）',L:1055,W:580,H:1045,url:'https://cenobots.com/products/l50',
+ rows:[['本体サイズ','L1,055 × W580 × H1,045 mm（スクイジー幅 840 mm）'],['重量','—'],['清掃モード','洗浄（スクラバー）'],['清掃幅','510 mm'],['清掃効率（当社目安）','トライアルで確認'],['清掃効率（メーカー）','時間あたり最大 2,203 ㎡（理論最大 2,570 ㎡/h）'],['連続稼働時間','最大6 h'],['水タンク','清水 55 L'],['最小通過幅','940 mm（販売代理店公表値）']],
+ note:'CENOBOTSのウェット専用機。選択肢の1つとして検討できる。'}
+];
+const IMG={phantas:1,cc1:1,bg1:1,mt1max:1,beetle:1,omnie:1,mira:1,sp50:1,l50:1}; // img/<id>.webp（各メーカー公式サイトの製品画像）
+const tabs=document.getElementById('tabs'),panel=document.getElementById('panel');
+let html='',g='';
+R.forEach((r,i)=>{if(r.grp!==g){g=r.grp;html+=`<span class="sep">${g==='推奨'?'推奨機種':'参考候補'}</span>`}
+ html+=`<button role="tab" id="t-${r.id}" aria-controls="panel" aria-selected="${i===0}" tabindex="${i===0?0:-1}" data-i="${i}">${r.name}</button>`});
+tabs.innerHTML=html;
+function side(r){
+ const S=0.2,base=372,px=40,pw=34;
+ const rw=r.L*S,rh=r.H*S,rx=110;
+ const lamp=r.lamp?`<line x1="${rx+rw*0.75}" y1="${base-rh}" x2="${rx+rw*0.75}" y2="${base-r.lamp*S}" stroke="var(--red)" stroke-width="3"/><rect x="${rx+rw*0.75-6}" y="${base-r.lamp*S-10}" width="12" height="12" rx="3" fill="var(--red)"/>`:'';
+ const ph=1700*S;
+ return `<svg viewBox="0 0 360 400" role="img" aria-label="${r.name}の側面サイズと身長170cmの人物の比較">
+ <line x1="0" y1="${base}" x2="360" y2="${base}" stroke="var(--line)" stroke-width="2"/>
+ ${[500,1000,1500].map(v=>`<line x1="0" y1="${base-v*S}" x2="360" y2="${base-v*S}" stroke="var(--line)" stroke-dasharray="3 5"/><text x="356" y="${base-v*S-4}" font-size="11" text-anchor="end" fill="var(--sub)">${v}mm</text>`).join('')}
+ <g fill="var(--sub)" opacity=".55"><circle cx="${px+pw/2}" cy="${base-ph+17}" r="17"/><rect x="${px}" y="${base-ph+38}" width="${pw}" height="${ph*0.42}" rx="12"/><rect x="${px+3}" y="${base-ph*0.52}" width="12" height="${ph*0.52}" rx="5"/><rect x="${px+pw-15}" y="${base-ph*0.52}" width="12" height="${ph*0.52}" rx="5"/></g>
+ <rect x="${rx}" y="${base-rh}" width="${rw}" height="${rh-8}" rx="10" fill="var(--blue)"/>
+ <rect x="${rx+6}" y="${base-rh+6}" width="${Math.min(rw*0.35,40)}" height="${Math.min(rh*0.25,24)}" rx="3" fill="#fff" opacity=".85"/>
+ <circle cx="${rx+16}" cy="${base-8}" r="8" fill="var(--ink)"/><circle cx="${rx+rw-16}" cy="${base-8}" r="8" fill="var(--ink)"/>
+ ${lamp}
+ </svg>`}
+function show(i,focus){
+ const r=R[i];
+ tabs.querySelectorAll('[role=tab]').forEach(b=>{const on=+b.dataset.i===i;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});
+ const fig=(IMG[r.id]?`<img src="img/${r.id}.webp" width="560" height="560" alt="${r.name}の製品画像（${r.mk}公式サイトより）">`:'')+`<div class="mini">${side(r)}</div>`;
+ const cap=(IMG[r.id]?`画像出典：${r.mk}公式サイト${r.id==='cc1'?'（画像はCC1 Pro。外形寸法はCC1と同一）':''}。`:'')+`下図は側面サイズの縮尺図（左の人物は身長170cm）${r.lamp?'。赤線は警告灯・フラッグの高さ':''}`;
+ panel.setAttribute('aria-labelledby','t-'+r.id);
+ panel.innerHTML=`<div class="panel"><div class="pic">${fig}<div class="cap">${cap}</div><div class="cap"><a href="${r.url}" target="_blank" rel="noopener">${r.mk}公式サイトの製品ページ ↗</a></div></div>
+ <div><div class="pname">${r.name}</div><div class="pmk">${r.mk}　<span class="tag">${r.grp}</span>${r.type}</div>
+ <table class="spec"><tbody>${r.rows.map(([k,v])=>`<tr class="${k.includes('当社目安')?'em':''}"><th scope="row">${k}</th><td>${v}</td></tr>`).join('')}</tbody></table>
+ <p style="margin-top:12px"><strong>所見：</strong>${r.note}</p></div></div>`;
+ if(focus)document.getElementById('t-'+r.id).focus();
+}
+tabs.addEventListener('click',e=>{const b=e.target.closest('[role=tab]');if(b)show(+b.dataset.i)});
+tabs.addEventListener('keydown',e=>{const cur=R.findIndex((r,i)=>tabs.querySelector(`[data-i="${i}"]`).getAttribute('aria-selected')==='true');
+ if(e.key==='ArrowRight'){e.preventDefault();show((cur+1)%R.length,true)}
+ if(e.key==='ArrowLeft'){e.preventDefault();show((cur-1+R.length)%R.length,true)}});
+show(0);
+const M=1700;
+/* ---- 導入費用シミュレーション ---- */
+const yen=n=>'¥'+n.toLocaleString('ja-JP');
+const T53=['term','契約期間',[[5,'5年契約'],[3,'3年契約']]];
+const MIMA='稼働時の遠隔監視・マップ修正（リモート）・月次レポート';
+const LIST='派遣価格表（ロボット派遣原価計算）';
+const S=[
+{id:'phantas',name:'Phantas',axes:[['model','本体仕様',[['h','ハンドル付き'],['n','ハンドル無し']]],T53],
+ d:c=>({cd:({h5:'SCD010',h3:'SCD009',n5:'SCD008',n3:'SCD002'})[c.model+c.term],src:'見積作成アプリ',
+  body:[c.model==='h'?'Phantas ハンドル付き 本体':'Phantas ハンドル無し 本体',({h5:43000,h3:72000,n5:38000,n3:64000})[c.model+c.term]],
+  base:[['02','みまもりサポート',6000,MIMA],['03','通信費',2000,'']],
+  cons:[['04','年2セット',6000,''],['05','年4セット',12000,'']],
+  opts:[['06','定期メンテナンス',5000,''],['07','保守サービス',15000,'']]})},
+{id:'cc1',name:'CC1',axes:[['model','本体仕様',[['c','CC1'],['p','CC1 Pro']]],T53],
+ d:c=>({cd:({c5:'SCD117',c3:'SCD116',p5:'SCD119',p3:'SCD118'})[c.model+c.term],src:'見積作成アプリ',
+  body:[c.model==='c'?'CC1 本体＋充電ステーション':'CC1 Pro 本体',({c5:45000,c3:74000,p5:53000,p3:87000})[c.model+c.term]],
+  base:[['02','みまもりサポート',6000,MIMA],['03','通信費',2000,'']],
+  cons:[['04','年2回',7000,'1日1回・1,000㎡未満の稼働を想定しています。'],['05','年4回',14000,'1日複数回・1,000㎡程度の稼働を想定しています。']],
+  opts:[['06','部品延長保証',7000,'故障時の保証です（メーカー保証1年間、消耗品を除く）。'],['07',c.model==='c'?'オンサイト保守契約':'修理保証',11000,'']]})},
+{id:'bg1',name:'BG1',axes:[['model','本体仕様',[['s','BG1'],['p','BG1 Pro']]],T53],
+ d:c=>{const k=c.model+c.term;return {cd:'',src:LIST,
+  body:[c.model==='s'?'BG1 本体':'BG1 Pro 本体',({s5:75000,s3:125000,p5:76000,p3:126000})[k]],
+  base:[['m','みまもりサポート',k==='s5'?7000:5000,MIMA],['t','通信費',2000,'']],
+  cons:c.model==='s'?[['c','消耗品',21000,'金額は目安です。内容はお見積り時に確定いたします。']]:[],
+  opts:k==='s5'?[['w','部品保証',9000,'保証条件は別途ご案内いたします。'],['r','修理保証',10000,'保守条件は別途ご案内いたします。']]:[],
+  pending:c.model==='p'?'BG1 Proの消耗品・部品保証・修理保証は別途協議とさせていただきます。':(c.term===3?'3年契約の部品保証・修理保証は別途協議とさせていただきます。':'')}}},
+{id:'mt1max',name:'MT1 MAX',axes:[T53],
+ d:c=>({cd:'',src:LIST,body:['MT1 MAX 本体＋自動充電器',c.term===5?56000:93000],
+  base:[['m','みまもりサポート',5000,MIMA],['t','通信費',2000,'']],
+  cons:[['c','消耗品',15000,'金額は目安です。内容はお見積り時に確定いたします。']],
+  opts:[['b','バッテリー交換',6000,'交換工賃を含みます（3年で1回交換）。'],]})},
+{id:'beetle',name:'Beetle',axes:[T53],
+ d:c=>c.term===5?{cd:'',src:LIST,body:['Beetle 本体',54000],
+  base:[['m','みまもりサポート',5000,MIMA],['t','通信費',3000,'']],
+  cons:[['c','消耗品',23000,'金額は目安です。内容はお見積り時に確定いたします。']],opts:[['s','保守サポート',18000,'']]}
+  :{cd:'SCD023',src:'見積作成アプリ',body:['Beetle 本体',163000],base:[['02','みまもりサポート（中型）',9000,'']],cons:[],opts:[]}},
+{id:'omnie',name:'OMNIE'},{id:'mira',name:'MIRA'},{id:'sp50',name:'CENOBOTS SP50'},{id:'l50',name:'CENOBOTS L50'}];
+const COMMON=[['phone','連絡用スマートフォン（Android）',4000,'LINE WORKS 1アカウント・5GBデータSIMを含みます。'],['lw','LINE WORKSアカウント',600,'アカウントのみの貸与です。'],['net','通信費（SIM／Wi-Fi＋SIM）',1800,'docomo 6GBデータSIM、またはWi-Fiルーター＋500MB SIM']];
+let si=0,cfg={},cart=[],common={};
+function reset(i){const r=S[i];cfg={qty:1,cons:'',opts:{},base:{}};
+ (r.axes||[]).forEach(([k,,o])=>cfg[k]=o[0][0]);if(r.d)r.d(cfg).base.forEach(b=>cfg.base[b[0]]=true)}
+const code=(D,k)=>D.cd?D.cd+'-'+k:'';
+function items(D,c){const out=[[code(D,'01'),D.body[0],D.body[1]]];
+ D.base.forEach(b=>{if(c.base[b[0]]!==false)out.push([code(D,b[0]),b[1],b[2]])});
+ const cs=D.cons.find(x=>x[0]===c.cons);if(cs)out.push([code(D,cs[0]),'消耗品'+(cs[1]==='消耗品'?'':'定期配送 '+cs[1]),cs[2]]);
+ D.opts.forEach(o=>{if(c.opts[o[0]])out.push([code(D,o[0]),o[1],o[2]])});return out}
+const unit=it=>it.reduce((a,x)=>a+x[2],0);
+const chk=(id,on,name,price,note)=>`<label class="chk"><input type="checkbox" data-c="${id}" ${on?'checked':''}><span>${name}${note?`<small>${note}</small>`:''}</span><span class="p">${yen(price)}</span></label>`;
+function seg(key,opts,val){return `<div class="seg">${opts.map(([v,t])=>`<button type="button" data-k="${key}" data-v="${v}" aria-pressed="${String(v)===String(val)}">${t}</button>`).join('')}</div>`}
+function drawBody(){
+ const r=S[si],el=document.getElementById('s-body');
+ if(!r.d){el.innerHTML=`<div class="na"><strong>${r.name}</strong>の費用は、運用内容を伺ったうえで別途協議とさせていただきます。</div>`;return}
+ const D=r.d(cfg),it=items(D,cfg),u=unit(it),cs=D.cons.find(c=>c[0]===cfg.cons);
+ el.innerHTML=r.axes.map(([k,t,o])=>`<div class="lbl">${t}</div>${seg(k,o,cfg[k])}`).join('')+
+ `<div class="lbl">台数</div><div class="qty"><button type="button" data-q="-1" aria-label="台数を減らす">−</button><output>${cfg.qty}台</output><button type="button" data-q="1" aria-label="台数を増やす">＋</button></div>
+ <div class="lbl">基本構成</div><label class="chk"><input type="checkbox" checked disabled><span>${D.body[0]}</span><span class="p">${yen(D.body[1])}</span></label>
+ ${D.base.map(b=>chk('b'+b[0],cfg.base[b[0]]!==false,b[1],b[2],b[3])).join('')}
+ ${D.cons.length?`<div class="lbl">消耗品${D.cons.length>1?'定期配送':''}</div>${seg('cons',[['','なし'],...D.cons.map(c=>[c[0],(c[1]==='消耗品'?'あり':c[1])+'（'+yen(c[2])+'）'])],cfg.cons)}${cs&&cs[3]?`<p class="note" style="margin:6px 0 0">${cs[3]}</p>`:''}`:''}
+ ${D.opts.length?`<div class="lbl">追加オプション</div>${D.opts.map(o=>chk('o'+o[0],cfg.opts[o[0]],o[1],o[2],o[3])).join('')}`:''}
+ ${D.pending?`<p class="note" style="margin:10px 0 0">${D.pending}</p>`:''}
+ <div class="sub"><span>1台あたり ${yen(u)}/月 × ${cfg.qty}台</span><b>${yen(u*cfg.qty)}/月</b></div>
+ <button type="button" class="btn" id="s-add" style="margin-top:12px">見積に追加</button>`}
+function save(){try{localStorage.setItem('oace-sim3',JSON.stringify({cart,common}))}catch(e){}}
+function drawCart(){
+ const c=document.getElementById('s-cart');
+ c.innerHTML=cart.length?cart.map((l,i)=>`<div class="line"><div class="hd"><div><strong>${l.name}</strong>（${l.term}年契約）× ${l.qty}台<br><span class="money">${yen(l.unit*l.qty)}/月</span></div><button type="button" class="x" data-del="${i}">削除</button></div><ul>${l.items.map(x=>`<li>${x[1]} ${yen(x[2])}</li>`).join('')}</ul></div>`).join(''):'<div class="empty">機種を選んで「見積に追加」を押すと、ここに表示されます。</div>';
+ document.getElementById('s-common').innerHTML=COMMON.map(x=>chk('m'+x[0],common[x[0]],x[1],x[2],x[3])).join('');
+ const cm=COMMON.reduce((a,x)=>a+(common[x[0]]?x[2]:0),0);
+ const mon=cart.reduce((a,l)=>a+l.unit*l.qty,0)+cm;
+ const maxT=cart.reduce((a,l)=>Math.max(a,l.term),0);
+ const all=cart.reduce((a,l)=>a+l.unit*l.qty*l.term*12,0)+cm*maxT*12;
+ document.getElementById('s-total').innerHTML=`<div><span>月額合計（税抜）</span><b>${yen(mon)}</b></div><div style="margin-top:6px"><span>契約期間合計（税抜）</span><span class="money" style="font-size:18px;font-weight:700">${yen(all)}</span></div><div style="font-size:13px;opacity:.9;margin-top:4px">各機種は契約期間の月数分、共通オプションは最も長い契約期間（${maxT||'—'}年）分で計算しています。</div>`;
+ save()}
+function text(){const L=['小田急エース 清掃ロボット 導入費用（らくロボはけん・税抜・月額）'];
+ cart.forEach(l=>{L.push(`■${l.name}（${l.term}年契約）× ${l.qty}台：${yen(l.unit*l.qty)}/月`);l.items.forEach(x=>L.push(`  ${x[1]} ${yen(x[2])}`))});
+ COMMON.forEach(x=>{if(common[x[0]])L.push(`■${x[1]}：${yen(x[2])}/月`)});
+ L.push(document.getElementById('s-total').innerText.replace(/\n/g,' '));return L.join('\n')}
+const rb=document.getElementById('s-robot');
+rb.innerHTML=S.map((r,i)=>`<button type="button" role="tab" data-r="${i}" aria-selected="${i===0}">${r.name}${r.d?'':'<small style="font-weight:400"> 別途協議</small>'}</button>`).join('');
+rb.addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;si=+b.dataset.r;rb.querySelectorAll('[data-r]').forEach(x=>x.setAttribute('aria-selected',x===b));reset(si);drawBody()});
+document.getElementById('s-body').addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;const r=S[si];
+ if(b.dataset.k){const k=b.dataset.k;cfg[k]=k==='term'?+b.dataset.v:b.dataset.v;if(k!=='cons'){cfg.opts={};const D=r.d(cfg);if(!D.cons.find(x=>x[0]===cfg.cons))cfg.cons='';}drawBody()}
+ else if(b.dataset.q){cfg.qty=Math.min(20,Math.max(1,cfg.qty+ +b.dataset.q));drawBody()}
+ else if(b.id==='s-add'){const D=r.d(cfg),it=items(D,cfg);cart.push({name:D.body[0].replace(/ 本体.*$/,''),term:cfg.term,qty:cfg.qty,items:it,unit:unit(it)});drawCart();
+  document.getElementById('s-msg').textContent='見積に追加しました。'}});
+document.getElementById('s-body').addEventListener('change',e=>{const c=e.target.dataset.c;if(!c)return;
+ if(c[0]==='b')cfg.base[c.slice(1)]=e.target.checked;else cfg.opts[c.slice(1)]=e.target.checked;drawBody()});
+const sc=document.getElementById('cost');
+sc.addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(d){cart.splice(+d.dataset.del,1);drawCart()}});
+document.getElementById('s-common').addEventListener('change',e=>{const c=e.target.dataset.c;if(c){common[c.slice(1)]=e.target.checked;drawCart()}});
+document.getElementById('s-copy').addEventListener('click',()=>{const m=document.getElementById('s-msg');
+ try{navigator.clipboard.writeText(text()).then(()=>m.textContent='コピーしました。',()=>m.textContent='コピーできませんでした。')}catch(e){m.textContent='コピーできませんでした。'}});
+let saved=null;try{saved=JSON.parse(localStorage.getItem('oace-sim3')||'null')}catch(e){}
+if(saved&&Array.isArray(saved.cart)){cart=saved.cart;common=saved.common||{}}
+else{reset(0);const D=S[0].d(cfg),it=items(D,cfg);cart=[{name:'Phantas ハンドル付き',term:5,qty:1,items:it,unit:unit(it)}]}
+reset(0);drawBody();drawCart();
+
+document.getElementById('vis').innerHTML=[...R].sort((a,b)=>(b.lamp||b.H)-(a.lamp||a.H)).map(r=>`<div class="vr"><div>${r.name}</div><div class="vt">${r.lamp?`<span class="x" style="width:${r.lamp/M*100}%"></span>`:''}<span style="width:${r.H/M*100}%"></span></div><div class="n">${r.H.toLocaleString()} mm${r.lamp?`<br><small style="color:var(--red)">${r.lamp.toLocaleString()} mm</small>`:''}</div></div>`).join('');
+}
+</script>
+</body>
+</html>
