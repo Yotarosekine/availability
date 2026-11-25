@@ -61,7 +61,7 @@ nav.scroll a{flex:none;text-decoration:none;color:var(--ink);font-size:14px;padd
 .pic{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column}
 .pic svg{width:100%;height:auto;display:block}
 .pic img{width:100%;height:auto;display:block;border-radius:6px;background:#fff}
-.pic .mini{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}.pic .mini svg{max-height:190px}
+.pic .mini{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}.pic .mini svg{max-height:300px}
 .pic .cap{font-size:13px;color:var(--sub);margin-top:8px}
 .pname{font-size:clamp(22px,3vw,30px);font-weight:700;line-height:1.2;margin:0 0 4px}
 .pmk{font-size:14px;color:var(--sub);margin-bottom:12px}
@@ -298,25 +298,21 @@ let html='',g='';
 R.forEach((r,i)=>{if(r.grp!==g){g=r.grp;html+=`<span class="sep">${g==='推奨'?'推奨機種':'参考候補'}</span>`}
  html+=`<button role="tab" id="t-${r.id}" aria-controls="panel" aria-selected="${i===0}" tabindex="${i===0?0:-1}" data-i="${i}">${r.name}</button>`});
 tabs.innerHTML=html;
+const AR={phantas:.839,cc1:.99,bg1:.905,mt1max:.6,beetle:.54,omnie:.724,mira:.743,sp50:.75,l50:.876};
 function side(r){
- const S=0.2,base=372,px=40,pw=34;
- const rw=r.L*S,rh=r.H*S,rx=110;
- const lamp=r.lamp?`<line x1="${rx+rw*0.75}" y1="${base-rh}" x2="${rx+rw*0.75}" y2="${base-r.lamp*S}" stroke="var(--red)" stroke-width="3"/><rect x="${rx+rw*0.75-6}" y="${base-r.lamp*S-10}" width="12" height="12" rx="3" fill="var(--red)"/>`:'';
- const ph=1700*S;
- return `<svg viewBox="0 0 360 400" role="img" aria-label="${r.name}の側面サイズと身長170cmの人物の比較">
- <line x1="0" y1="${base}" x2="360" y2="${base}" stroke="var(--line)" stroke-width="2"/>
- ${[500,1000,1500].map(v=>`<line x1="0" y1="${base-v*S}" x2="360" y2="${base-v*S}" stroke="var(--line)" stroke-dasharray="3 5"/><text x="356" y="${base-v*S-4}" font-size="11" text-anchor="end" fill="var(--sub)">${v}mm</text>`).join('')}
- <g fill="var(--sub)" opacity=".55"><circle cx="${px+pw/2}" cy="${base-ph+17}" r="17"/><rect x="${px}" y="${base-ph+38}" width="${pw}" height="${ph*0.42}" rx="12"/><rect x="${px+3}" y="${base-ph*0.52}" width="12" height="${ph*0.52}" rx="5"/><rect x="${px+pw-15}" y="${base-ph*0.52}" width="12" height="${ph*0.52}" rx="5"/></g>
- <rect x="${rx}" y="${base-rh}" width="${rw}" height="${rh-8}" rx="10" fill="var(--blue)"/>
- <rect x="${rx+6}" y="${base-rh+6}" width="${Math.min(rw*0.35,40)}" height="${Math.min(rh*0.25,24)}" rx="3" fill="#fff" opacity=".85"/>
- <circle cx="${rx+16}" cy="${base-8}" r="8" fill="var(--ink)"/><circle cx="${rx+rw-16}" cy="${base-8}" r="8" fill="var(--ink)"/>
- ${lamp}
+ const S=0.2,base=372,px=84,pw=34,ph=1700*S;
+ const h=(r.lamp||r.H)*S,w=h*AR[r.id],rx=Math.max(140,140+(255-w)/2);
+ return `<svg viewBox="0 0 400 400" role="img" aria-label="${r.name}の実機画像と身長170cmの人物の高さ比較">
+ <line x1="0" y1="${base}" x2="400" y2="${base}" stroke="var(--line)" stroke-width="2"/>
+ ${[500,1000,1500].map(v=>`<line x1="0" y1="${base-v*S}" x2="400" y2="${base-v*S}" stroke="var(--line)" stroke-dasharray="3 5"/><text x="2" y="${base-v*S-5}" font-size="14" text-anchor="start" fill="var(--sub)">${v.toLocaleString()}mm</text>`).join('')}
+ <g fill="var(--sub)" opacity=".45"><circle cx="${px+pw/2}" cy="${base-ph+17}" r="17"/><rect x="${px}" y="${base-ph+38}" width="${pw}" height="${ph*0.42}" rx="12"/><rect x="${px+3}" y="${base-ph*0.52}" width="12" height="${ph*0.52}" rx="5"/><rect x="${px+pw-15}" y="${base-ph*0.52}" width="12" height="${ph*0.52}" rx="5"/></g>
+ <image href="img/${r.id}-cut.webp" x="${rx}" y="${base-h}" width="${w}" height="${h}" preserveAspectRatio="xMidYMax meet"/>
  </svg>`}
 function show(i,focus){
  const r=R[i];
  tabs.querySelectorAll('[role=tab]').forEach(b=>{const on=+b.dataset.i===i;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});
  const fig=(IMG[r.id]?`<img src="img/${r.id}.webp" width="560" height="560" alt="${r.name}の製品画像（${r.mk}公式サイトより）">`:'')+`<div class="mini">${side(r)}</div>`;
- const cap=(IMG[r.id]?`画像出典：${r.mk}公式サイト${r.id==='cc1'?'（画像はCC1 Pro。外形寸法はCC1と同一）':''}。`:'')+`下図は側面サイズの縮尺図（左の人物は身長170cm）${r.lamp?'。赤線は警告灯・フラッグの高さ':''}`;
+ const cap=(IMG[r.id]?`画像出典：${r.mk}公式サイト${r.id==='cc1'?'（画像はCC1 Pro。外形寸法はCC1と同一）':''}。`:'')+`下図は実機画像を高さに合わせて縮尺したもの（左の人物は身長170cm）${r.lamp?'。警告灯・フラッグを含む高さで表示':''}`;
  panel.setAttribute('aria-labelledby','t-'+r.id);
  panel.innerHTML=`<div class="panel"><div class="pic">${fig}<div class="cap">${cap}</div><div class="cap"><a href="${r.url}" target="_blank" rel="noopener">${r.mk}公式サイトの製品ページ ↗</a></div></div>
  <div><div class="pname">${r.name}</div><div class="pmk">${r.mk}　<span class="tag">${r.grp}</span>${r.type}</div>
